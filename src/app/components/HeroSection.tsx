@@ -9,7 +9,7 @@ import HeroSectionHeader from "./HeroSectionHeader";
 import env from "../env";
 
 export const HeroSection = async() => {
-    const questions = await databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.databaseApiKey, [
+    const questions = await databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.questionCollectionApiKey, [
         Query.orderDesc("$createdAt"),
         Query.limit(15),
     ]);
