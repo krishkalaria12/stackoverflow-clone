@@ -1,3 +1,4 @@
+import env from "@/app/env";
 import Pagination from "@/components/Pagination";
 import { MarkdownPreview } from "@/components/RTE";
 import { answerCollection, db, questionCollection } from "@/models/name";
@@ -23,11 +24,11 @@ const Page = async ({
         Query.limit(25),
     ];
 
-    const answers = await databases.listDocuments(db, answerCollection, queries);
+    const answers = await databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.answerCollectionApiKey, queries);
 
     answers.documents = await Promise.all(
         answers.documents.map(async ans => {
-            const question = await databases.getDocument(db, questionCollection, ans.questionId, [
+            const question = await databases.getDocument(env.appwrite.databaseApiKey, env.appwrite.questionCollectionApiKey, ans.questionId, [
                 Query.select(["title"]),
             ]);
             return { ...ans, question };

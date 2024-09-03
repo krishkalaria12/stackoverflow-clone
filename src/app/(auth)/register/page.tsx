@@ -118,7 +118,9 @@ export default function Register() {
                     type="submit"
                     disabled={isLoading}
                 >
-                    Sign up &rarr;
+                    {
+                        !isLoading ? `Sign up` : `Signing up...`
+                    }
                     <BottomGradient />
                 </button>
 

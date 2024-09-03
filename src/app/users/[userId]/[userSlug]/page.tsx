@@ -5,15 +5,16 @@ import { MagicCard, MagicContainer } from "@/components/magicui/magic-card";
 import NumberTicker from "@/components/magicui/number-ticker";
 import { answerCollection, db, questionCollection } from "@/models/name";
 import { Query } from "node-appwrite";
+import env from "@/app/env";
 
 const Page = async ({ params }: { params: { userId: string; userSlug: string } }) => {
     const [user, questions, answers] = await Promise.all([
         users.get<UserPrefs>(params.userId),
-        databases.listDocuments(db, questionCollection, [
+        databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.questionCollectionApiKey, [
             Query.equal("authorId", params.userId),
             Query.limit(1), // for optimization
         ]),
-        databases.listDocuments(db, answerCollection, [
+        databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.answerCollectionApiKey, [
             Query.equal("authorId", params.userId),
             Query.limit(1), // for optimization
         ]),

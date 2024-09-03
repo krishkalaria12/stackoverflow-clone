@@ -47,7 +47,7 @@ const Notification = ({ user }: { user: Models.User<UserPrefs> }) => {
     );
 };
 
-export default async function TopContributers() {
+export const TopContributers = async() => {
     const topUsers = await users.list<UserPrefs>([Query.limit(10)]);
 
     return (

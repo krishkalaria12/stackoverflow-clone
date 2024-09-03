@@ -3,7 +3,7 @@ import AnimatedGridPattern from "@/components/magicui/animated-grid-pattern";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-const Footer = () => {
+export const Footer = () => {
     const items = [
         {
             title: "Home",
@@ -51,5 +51,3 @@ const Footer = () => {
         </footer>
     );
 };
-
-export default Footer;

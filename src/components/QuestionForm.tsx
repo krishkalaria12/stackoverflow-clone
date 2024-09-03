@@ -1,19 +1,12 @@
 "use client";
 
+import React, { useState } from "react";
 import RTE from "@/components/RTE";
-import Meteors from "@/components/magicui/meteors";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/Auth";
-import { cn } from "@/lib/utils";
-import slugify from "@/utils/slugify";
 import { IconX } from "@tabler/icons-react";
-import { Models, ID } from "appwrite";
-import { useRouter } from "next/navigation";
-import React from "react";
-import { databases, storage } from "@/models/client/config";
-import { db, questionAttachmentBucket, questionCollection } from "@/models/name";
-import { Confetti } from "@/components/magicui/confetti";
+import { Meteors } from "@/components/magicui/meteors";
 
 const LabelInputContainer = ({
     children,
@@ -23,158 +16,50 @@ const LabelInputContainer = ({
     className?: string;
 }) => {
     return (
-        <div
-            className={cn(
-                "relative flex w-full flex-col space-y-2 overflow-hidden rounded-xl border border-white/20 bg-slate-950 p-4",
-                className
-            )}
-        >
+        <div className={`relative flex w-full flex-col space-y-2 overflow-hidden rounded-xl border border-white/20 bg-slate-950 p-4 ${className}`}>
             <Meteors number={30} />
             {children}
         </div>
     );
 };
 
-/**
- * ******************************************************************************
- * ![INFO]: for buttons, refer to https://ui.aceternity.com/components/tailwindcss-buttons
- * ******************************************************************************
- */
-const QuestionForm = ({ question }: { question?: Models.Document }) => {
+const QuestionForm = ({ onSubmit, isLoading }: { onSubmit: (formData: FormData) => void; isLoading: boolean }) => {
     const { user } = useAuthStore();
-    const [tag, setTag] = React.useState("");
-    const router = useRouter();
-
-    const [formData, setFormData] = React.useState({
-        title: String(question?.title || ""),
-        content: String(question?.content || ""),
-        authorId: user?.$id,
-        tags: new Set((question?.tags || []) as string[]),
+    const [tag, setTag] = useState("");
+    const [imagePreview, setImagePreview] = useState<string | null>(null); // State for image preview
+    const [formData, setFormData] = useState({
+        title: "",
+        content: "",
+        tags: new Set<string>(),
         attachment: null as File | null,
     });
 
-    const [loading, setLoading] = React.useState(false);
-    const [error, setError] = React.useState("");
-
-    const loadConfetti = (timeInMS = 3000) => {
-        const end = Date.now() + timeInMS; // 3 seconds
-        const colors = ["#a786ff", "#fd8bbc", "#eca184", "#f8deb1"];
-
-        const frame = () => {
-            if (Date.now() > end) return;
-
-            Confetti({
-                particleCount: 2,
-                angle: 60,
-                spread: 55,
-                startVelocity: 60,
-                origin: { x: 0, y: 0.5 },
-                colors: colors,
-            });
-            Confetti({
-                particleCount: 2,
-                angle: 120,
-                spread: 55,
-                startVelocity: 60,
-                origin: { x: 1, y: 0.5 },
-                colors: colors,
-            });
-
-            requestAnimationFrame(frame);
-        };
-
-        frame();
-    };
-
-    const create = async () => {
-        if (!formData.attachment) throw new Error("Please upload an image");
-
-        const storageResponse = await storage.createFile(
-            questionAttachmentBucket,
-            ID.unique(),
-            formData.attachment
-        );
-
-        const response = await databases.createDocument(db, questionCollection, ID.unique(), {
-            title: formData.title,
-            content: formData.content,
-            authorId: formData.authorId,
-            tags: Array.from(formData.tags),
-            attachmentId: storageResponse.$id,
-        });
-
-        loadConfetti();
-
-        return response;
-    };
-
-    const update = async () => {
-        if (!question) throw new Error("Please provide a question");
-
-        const attachmentId = await (async () => {
-            if (!formData.attachment) return question?.attachmentId as string;
-
-            await storage.deleteFile(questionAttachmentBucket, question.attachmentId);
-
-            const file = await storage.createFile(
-                questionAttachmentBucket,
-                ID.unique(),
-                formData.attachment
-            );
-
-            return file.$id;
-        })();
-
-        const response = await databases.updateDocument(db, questionCollection, question.$id, {
-            title: formData.title,
-            content: formData.content,
-            authorId: formData.authorId,
-            tags: Array.from(formData.tags),
-            attachmentId: attachmentId,
-        });
-
-        return response;
-    };
-
-    const submit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
-        // didn't check for attachment because it's optional in updating
-        if (!formData.title || !formData.content || !formData.authorId) {
-            setError(() => "Please fill out all fields");
+        if (!formData.title || !formData.content || !user) {
+            alert("Please fill in all the required fields.");
             return;
         }
 
-        setLoading(() => true);
-        setError(() => "");
-
-        try {
-            const response = question ? await update() : await create();
-
-            router.push(`/questions/${response.$id}/${slugify(formData.title)}`);
-        } catch (error: any) {
-            setError(() => error.message);
+        const submitData = new FormData();
+        submitData.append("title", formData.title);
+        submitData.append("content", formData.content);
+        submitData.append("authorId", user.$id);
+        submitData.append("tags", JSON.stringify(Array.from(formData.tags)));
+        if (formData.attachment) {
+            submitData.append("attachment", formData.attachment);
         }
 
-        setLoading(() => false);
+        onSubmit(submitData);
     };
 
     return (
-        <form className="space-y-4" onSubmit={submit}>
-            {error && (
-                <LabelInputContainer>
-                    <div className="text-center">
-                        <span className="text-red-500">{error}</span>
-                    </div>
-                </LabelInputContainer>
-            )}
+        <form className="space-y-4" onSubmit={handleSubmit}>
             <LabelInputContainer>
                 <Label htmlFor="title">
-                    Title Address
+                    Title
                     <br />
-                    <small>
-                        Be specific and imagine you&apos;re asking a question to another person.
-                    </small>
+                    <small>Be specific and imagine you&#39;re asking a question to another person.</small>
                 </Label>
                 <Input
                     id="title"
@@ -182,77 +67,82 @@ const QuestionForm = ({ question }: { question?: Models.Document }) => {
                     placeholder="e.g. Is there an R function for finding the index of an element in a vector?"
                     type="text"
                     value={formData.title}
-                    onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
                 />
             </LabelInputContainer>
+
             <LabelInputContainer>
                 <Label htmlFor="content">
                     What are the details of your problem?
                     <br />
-                    <small>
-                        Introduce the problem and expand on what you put in the title. Minimum 20
-                        characters.
-                    </small>
+                    <small>Introduce the problem and expand on what you put in the title. Minimum 20 characters.</small>
                 </Label>
                 <RTE
                     value={formData.content}
-                    onChange={value => setFormData(prev => ({ ...prev, content: value || "" }))}
+                    onChange={(value) => setFormData((prev) => ({ ...prev, content: value || "" }))}
                 />
             </LabelInputContainer>
+
             <LabelInputContainer>
                 <Label htmlFor="image">
                     Image
                     <br />
-                    <small>
-                        Add image to your question to make it more clear and easier to understand.
-                    </small>
+                    <small>Add an image to your question to make it more clear and easier to understand.</small>
                 </Label>
                 <Input
                     id="image"
                     name="image"
                     accept="image/*"
-                    placeholder="e.g. Is there an R function for finding the index of an element in a vector?"
                     type="file"
-                    onChange={e => {
+                    onChange={(e) => {
                         const files = e.target.files;
                         if (!files || files.length === 0) return;
-                        setFormData(prev => ({
+                        const file = files[0];
+                        setFormData((prev) => ({
                             ...prev,
-                            attachment: files[0],
+                            attachment: file,
                         }));
+                        // Generate image preview
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                            setImagePreview(reader.result as string);
+                        };
+                        reader.readAsDataURL(file);
                     }}
                 />
+                {imagePreview && (
+                    <div className="mt-4">
+                        <Label>Image Preview:</Label>
+                        <img src={imagePreview} alt="Image preview" className="mt-2 max-h-64 rounded" />
+                    </div>
+                )}
             </LabelInputContainer>
+
             <LabelInputContainer>
                 <Label htmlFor="tag">
                     Tags
                     <br />
-                    <small>
-                        Add tags to describe what your question is about. Start typing to see
-                        suggestions.
-                    </small>
+                    <small>Add tags to describe what your question is about. Start typing to see suggestions.</small>
                 </Label>
                 <div className="flex w-full gap-4">
-                    <div className="w-full">
-                        <Input
-                            id="tag"
-                            name="tag"
-                            placeholder="e.g. (java c objective-c)"
-                            type="text"
-                            value={tag}
-                            onChange={e => setTag(() => e.target.value)}
-                        />
-                    </div>
+                    <Input
+                        id="tag"
+                        name="tag"
+                        placeholder="e.g. (java c objective-c)"
+                        type="text"
+                        value={tag}
+                        onChange={(e) => setTag(e.target.value)}
+                    />
                     <button
                         className="relative shrink-0 rounded-full border border-slate-600 bg-slate-700 px-8 py-2 text-sm text-white transition duration-200 hover:shadow-2xl hover:shadow-white/[0.1]"
                         type="button"
                         onClick={() => {
                             if (tag.length === 0) return;
-                            setFormData(prev => ({
+                            setFormData((prev) => ({
                                 ...prev,
                                 tags: new Set([...Array.from(prev.tags), tag]),
                             }));
-                            setTag(() => "");
+                            setTag("");
                         }}
                     >
                         <div className="absolute inset-x-0 -top-px mx-auto h-px w-1/2 bg-gradient-to-r from-transparent via-teal-500 to-transparent shadow-2xl" />
@@ -270,11 +160,9 @@ const QuestionForm = ({ question }: { question?: Models.Document }) => {
                                     <span>{tag}</span>
                                     <button
                                         onClick={() => {
-                                            setFormData(prev => ({
+                                            setFormData((prev) => ({
                                                 ...prev,
-                                                tags: new Set(
-                                                    Array.from(prev.tags).filter(t => t !== tag)
-                                                ),
+                                                tags: new Set(Array.from(prev.tags).filter((t) => t !== tag)),
                                             }));
                                         }}
                                         type="button"
@@ -288,12 +176,13 @@ const QuestionForm = ({ question }: { question?: Models.Document }) => {
                     ))}
                 </div>
             </LabelInputContainer>
+
             <button
                 className="inline-flex h-12 animate-shimmer items-center justify-center rounded-md border border-slate-800 bg-[linear-gradient(110deg,#000103,45%,#1e2631,55%,#000103)] bg-[length:200%_100%] px-6 font-medium text-slate-400 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
                 type="submit"
-                disabled={loading}
+                disabled={isLoading}
             >
-                {question ? "Update" : "Publish"}
+                {isLoading ? "Publishing..." : "Publish"}
             </button>
         </form>
     );

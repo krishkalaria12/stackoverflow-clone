@@ -4,9 +4,10 @@ import { databases, users } from "@/models/server/config";
 import { UserPrefs } from "@/store/Auth";
 import { Query } from "node-appwrite";
 import React from "react";
+import env from "../env";
 
-const LatestQuestions = async () => {
-    const questions = await databases.listDocuments(db, questionCollection, [
+export const LatestQuestions = async () => {
+    const questions = await databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.questionCollectionApiKey, [
         Query.limit(5),
         Query.orderDesc("$createdAt"),
     ]);
@@ -16,11 +17,11 @@ const LatestQuestions = async () => {
         questions.documents.map(async ques => {
             const [author, answers, votes] = await Promise.all([
                 users.get<UserPrefs>(ques.authorId),
-                databases.listDocuments(db, answerCollection, [
+                databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.answerCollectionApiKey, [
                     Query.equal("questionId", ques.$id),
                     Query.limit(1), // for optimization
                 ]),
-                databases.listDocuments(db, voteCollection, [
+                databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.voteCollectionApiKey, [
                     Query.equal("type", "question"),
                     Query.equal("typeId", ques.$id),
                     Query.limit(1), // for optimization
@@ -50,5 +51,3 @@ const LatestQuestions = async () => {
         </div>
     );
 };
-
-export default LatestQuestions;

@@ -10,6 +10,7 @@ import React from "react";
 const EditQues = ({ question }: { question: Models.Document }) => {
     const { user } = useAuthStore();
     const router = useRouter();
+    const [isLoading, setIsLoading] = React.useState(false);
 
     React.useEffect(() => {
         if (question.authorId !== user?.$id) {
@@ -19,6 +20,12 @@ const EditQues = ({ question }: { question: Models.Document }) => {
 
     if (user?.$id !== question.authorId) return null;
 
+    const handleSubmit = async (formData: FormData) => {
+        setIsLoading(true);
+        // Add your form submission logic here
+        setIsLoading(false);
+    };
+
     return (
         <div className="block pb-20 pt-32">
             <div className="container mx-auto px-4">
@@ -27,12 +34,11 @@ const EditQues = ({ question }: { question: Models.Document }) => {
                 <div className="flex flex-wrap md:flex-row-reverse">
                     <div className="w-full md:w-1/3"></div>
                     <div className="w-full md:w-2/3">
-                        <QuestionForm question={question} />
+                        <QuestionForm onSubmit={handleSubmit} isLoading={isLoading} />
                     </div>
                 </div>
             </div>
         </div>
     );
 };
-
 export default EditQues;

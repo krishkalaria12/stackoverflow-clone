@@ -5,14 +5,16 @@ import createQuestionCollection from "./question.collection";
 import createAnswerCollection from "./answer.collection";
 import createCommentCollection from "./comment.collection";
 import createVoteCollection from "./vote.collection";
+import { ID } from "node-appwrite";
+import env from "@/app/env";
 
 export default async function getOrCreateDb() {
     try {
-        await databases.get(db);
+        await databases.get(env.appwrite.databaseApiKey);
         console.log("Database Connection established");
     } catch (error) {
         try {
-            await databases.create(db, db);
+            await databases.create(ID.unique(), db);
             console.log("Database Creation Successful");
 
             // Create collections

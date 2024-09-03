@@ -1,3 +1,4 @@
+import env from "@/app/env";
 import Pagination from "@/components/Pagination";
 import { answerCollection, db, questionCollection, voteCollection } from "@/models/name";
 import { databases } from "@/models/server/config";
@@ -25,13 +26,13 @@ const Page = async ({
 
     if (searchParams.voteStatus) query.push(Query.equal("voteStatus", searchParams.voteStatus));
 
-    const votes = await databases.listDocuments(db, voteCollection, query);
+    const votes = await databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.voteCollectionApiKey, query);
 
     votes.documents = await Promise.all(
         votes.documents.map(async vote => {
             const questionOfTypeQuestion =
                 vote.type === "question"
-                    ? await databases.getDocument(db, questionCollection, vote.typeId, [
+                    ? await databases.getDocument(env.appwrite.databaseApiKey, env.appwrite.questionCollectionApiKey, vote.typeId, [
                           Query.select(["title"]),
                       ])
                     : null;
@@ -43,7 +44,7 @@ const Page = async ({
                 };
             }
 
-            const answer = await databases.getDocument(db, answerCollection, vote.typeId);
+            const answer = await databases.getDocument(env.appwrite.databaseApiKey, env.appwrite.answerCollectionApiKey, vote.typeId);
             const questionOfTypeAnswer = await databases.getDocument(
                 db,
                 questionCollection,

@@ -1,15 +1,16 @@
-import { Permission } from "node-appwrite";
+import { ID, Permission } from "node-appwrite";
 import { questionAttachmentBucket } from "../name";
 import { storage } from "./config";
+import env from "@/app/env";
 
 export default async function getOrCreateStorage() {
     try {
-        await storage.getBucket(questionAttachmentBucket);
+        await storage.getBucket(env.appwrite.storageApiKey);
         console.log("Storage Connected");
     } catch (error) {
         try {
             await storage.createBucket(
-                questionAttachmentBucket,
+                ID.unique(),
                 questionAttachmentBucket,
                 [
                     Permission.create("users"),

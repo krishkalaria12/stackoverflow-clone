@@ -1,3 +1,4 @@
+import env from "@/app/env";
 import Pagination from "@/components/Pagination";
 import QuestionCard from "@/components/QuestionCard";
 import { answerCollection, db, questionCollection, voteCollection } from "@/models/name";
@@ -22,17 +23,17 @@ const Page = async ({
         Query.limit(25),
     ];
 
-    const questions = await databases.listDocuments(db, questionCollection, queries);
+    const questions = await databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.questionCollectionApiKey, queries);
 
     questions.documents = await Promise.all(
         questions.documents.map(async ques => {
             const [author, answers, votes] = await Promise.all([
                 users.get<UserPrefs>(ques.authorId),
-                databases.listDocuments(db, answerCollection, [
+                databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.answerCollectionApiKey, [
                     Query.equal("questionId", ques.$id),
                     Query.limit(1), // for optimization
                 ]),
-                databases.listDocuments(db, voteCollection, [
+                databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.voteCollectionApiKey, [
                     Query.equal("type", "question"),
                     Query.equal("typeId", ques.$id),
                     Query.limit(1), // for optimization

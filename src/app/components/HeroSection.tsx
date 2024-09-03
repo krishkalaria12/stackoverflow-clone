@@ -6,9 +6,10 @@ import { Query } from "node-appwrite";
 import slugify from "@/utils/slugify";
 import { storage } from "@/models/client/config";
 import HeroSectionHeader from "./HeroSectionHeader";
+import env from "../env";
 
-export default async function HeroSection() {
-    const questions = await databases.listDocuments(db, questionCollection, [
+export const HeroSection = async() => {
+    const questions = await databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.databaseApiKey, [
         Query.orderDesc("$createdAt"),
         Query.limit(15),
     ]);
