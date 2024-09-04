@@ -20,7 +20,7 @@ export const HeroSection = async() => {
             products={questions.documents.map(q => ({
                 title: q.title,
                 link: `/questions/${q.$id}/${slugify(q.title)}`,
-                thumbnail: storage.getFilePreview(questionAttachmentBucket, q.attachmentId).href,
+                thumbnail: storage.getFilePreview(env.appwrite.storageApiKey, q.attachmentId).href,
             }))}
         />
     );

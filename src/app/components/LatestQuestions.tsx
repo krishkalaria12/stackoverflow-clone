@@ -11,7 +11,6 @@ export const LatestQuestions = async () => {
         Query.limit(5),
         Query.orderDesc("$createdAt"),
     ]);
-    console.log("Fetched Questions:", questions);
 
     questions.documents = await Promise.all(
         questions.documents.map(async ques => {
@@ -41,8 +40,6 @@ export const LatestQuestions = async () => {
         })
     );
 
-    console.log("Latest question")
-    console.log(questions)
     return (
         <div className="space-y-6">
             {questions.documents.map(question => (

@@ -1,3 +1,4 @@
+import env from "@/app/env";
 import { answerCollection, db, questionCollection, voteCollection } from "@/models/name";
 import { databases, users } from "@/models/server/config";
 import { UserPrefs } from "@/store/Auth";
@@ -8,19 +9,19 @@ export async function POST(request: NextRequest) {
     try {
         const { votedById, voteStatus, type, typeId } = await request.json();
 
-        const response = await databases.listDocuments(db, voteCollection, [
+        const response = await databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.voteCollectionApiKey, [
             Query.equal("type", type),
             Query.equal("typeId", typeId),
             Query.equal("votedById", votedById),
         ]);
 
         if (response.documents.length > 0) {
-            await databases.deleteDocument(db, voteCollection, response.documents[0].$id);
+            await databases.deleteDocument(env.appwrite.databaseApiKey, env.appwrite.voteCollectionApiKey, response.documents[0].$id);
 
             // Decrease the reputation of the question/answer author
             const questionOrAnswer = await databases.getDocument(
                 db,
-                type === "question" ? questionCollection : answerCollection,
+                type === "question" ? env.appwrite.questionCollectionApiKey : env.appwrite.answerCollectionApiKey,
                 typeId
             );
 
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
 
         // that means prev vote does not exists or voteStatus changed
         if (response.documents[0]?.voteStatus !== voteStatus) {
-            const doc = await databases.createDocument(db, voteCollection, ID.unique(), {
+            const doc = await databases.createDocument(env.appwrite.databaseApiKey, env.appwrite.voteCollectionApiKey, ID.unique(), {
                 type,
                 typeId,
                 voteStatus,
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
             // Increate/Decrease the reputation of the question/answer author accordingly
             const questionOrAnswer = await databases.getDocument(
                 db,
-                type === "question" ? questionCollection : answerCollection,
+                type === "question" ? env.appwrite.questionCollectionApiKey : env.appwrite.answerCollectionApiKey,
                 typeId
             );
 
@@ -72,14 +73,14 @@ export async function POST(request: NextRequest) {
             }
 
             const [upvotes, downvotes] = await Promise.all([
-                databases.listDocuments(db, voteCollection, [
+                databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.voteCollectionApiKey, [
                     Query.equal("type", type),
                     Query.equal("typeId", typeId),
                     Query.equal("voteStatus", "upvoted"),
                     Query.equal("votedById", votedById),
                     Query.limit(1), // for optimization as we only need total
                 ]),
-                databases.listDocuments(db, voteCollection, [
+                databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.voteCollectionApiKey, [
                     Query.equal("type", type),
                     Query.equal("typeId", typeId),
                     Query.equal("voteStatus", "downvoted"),
@@ -100,14 +101,14 @@ export async function POST(request: NextRequest) {
         }
 
         const [upvotes, downvotes] = await Promise.all([
-            databases.listDocuments(db, voteCollection, [
+            databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.voteCollectionApiKey, [
                 Query.equal("type", type),
                 Query.equal("typeId", typeId),
                 Query.equal("voteStatus", "upvoted"),
                 Query.equal("votedById", votedById),
                 Query.limit(1), // for optimization as we only need total
             ]),
-            databases.listDocuments(db, voteCollection, [
+            databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.voteCollectionApiKey, [
                 Query.equal("type", type),
                 Query.equal("typeId", typeId),
                 Query.equal("voteStatus", "downvoted"),

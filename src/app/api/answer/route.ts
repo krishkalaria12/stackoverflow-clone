@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { UserPrefs } from "@/store/Auth"
 
 import { ID } from "node-appwrite";
+import env from "@/app/env";
 
 export async function POST(request: NextRequest) {
     try {
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
         }
 
         // create answer
-        const AnswerCreation = await databases.createDocument(db, answerCollection, ID.unique(), {
+        const AnswerCreation = await databases.createDocument(env.appwrite.databaseApiKey, env.appwrite.answerCollectionApiKey, ID.unique(), {
             content: answer,
             questionId,
             authorId
@@ -60,10 +61,10 @@ export async function DELETE(request: NextRequest) {
             })
         }
 
-        const answer = await databases.getDocument(db, answerCollection, answerId);
+        const answer = await databases.getDocument(env.appwrite.databaseApiKey, env.appwrite.answerCollectionApiKey, answerId);
 
         if (answer) {
-            const response = await databases.deleteDocument(db, answerCollection, answerId);
+            const response = await databases.deleteDocument(env.appwrite.databaseApiKey, env.appwrite.answerCollectionApiKey, answerId);
 
             const prefs = await users.getPrefs<UserPrefs>(answer.authorId);
             await users.updatePrefs(answer.authorId, {

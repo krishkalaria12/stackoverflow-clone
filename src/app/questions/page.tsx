@@ -1,5 +1,4 @@
 import { databases, users } from "@/models/server/config";
-import { answerCollection, db, voteCollection, questionCollection } from "@/models/name";
 import { Query } from "node-appwrite";
 import React from "react";
 import Link from "next/link";
@@ -33,7 +32,6 @@ const Page = async ({
         );
 
     const questions = await databases.listDocuments(env.appwrite.databaseApiKey, env.appwrite.questionCollectionApiKey, queries);
-    console.log("Questions", questions)
 
     questions.documents = await Promise.all(
         questions.documents.map(async ques => {
